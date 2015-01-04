@@ -81,25 +81,6 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\amd64\**\*">
-      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
-      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\x86\**\*">
-      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
-      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <Content Include="FodyWeavers.xml" />
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
@@ -109,6 +90,21 @@
     <Error Condition="!Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Fody.1.26.1\build\Fody.targets'))" />
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
+  <ItemGroup>
+    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\amd64\git2-91fa31f.dll">
+      <Link>costura64/%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
+      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\x86\git2-91fa31f.dll">
+      <Link>costura32/%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
+      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </EmbeddedResource>
+    <Content Include="FodyWeavers.xml" />
+  </ItemGroup>
   <Import Project="..\..\packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" />
   <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
     <ParameterGroup>
