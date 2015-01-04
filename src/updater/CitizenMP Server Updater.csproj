@@ -14,6 +14,8 @@
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>d8335321</NuGetPackageImportStamp>
     <TargetFrameworkProfile />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -80,22 +82,22 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-  	<EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\amd64\**\*">
-	  <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</EmbeddedResource>
-  	<EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
-	  <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</EmbeddedResource>
-  	<EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\x86\**\*">
-	  <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</EmbeddedResource>
-  	<EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
-	  <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
-	  <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-	</EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\amd64\**\*">
+      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
+      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\x86\**\*">
+      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
+      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Content Include="FodyWeavers.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
@@ -105,6 +107,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props'))" />
     <Error Condition="!Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Fody.1.26.1\build\Fody.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <Import Project="..\..\packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" />
   <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
@@ -143,6 +146,7 @@ foreach (var item in filesToCleanup)
   <Target Name="CleanReferenceCopyLocalPaths" AfterTargets="AfterBuild;NonWinFodyTarget">
     <CosturaCleanup Config="FodyWeavers.xml" Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
   </Target>
+  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
