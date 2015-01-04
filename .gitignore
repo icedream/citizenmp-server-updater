@@ -65,10 +65,8 @@ DocProject/Help/html
 publish/
 
 # NuGet Packages
-packages/*
-!packages/Fody.1.26.1
-packages/Fody.*/*
-!packages/Fody.*/build
+packages/*/*
+!packages/*/build
 
 # Windows Azure Build Output
 csx/
