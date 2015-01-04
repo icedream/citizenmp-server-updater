@@ -65,6 +65,7 @@ DocProject/Help/html
 publish/
 
 # NuGet Packages
+packages/*.config
 packages/*/*
 !packages/*/build
 
@@ -100,3 +101,4 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+src/updater/costura??/git2-???????.dll

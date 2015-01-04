@@ -1,6 +1,5 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="..\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props" Condition="Exists('..\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,7 +11,7 @@
     <AssemblyName>citimp_upd</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>d8335321</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>30c6a65d</NuGetPackageImportStamp>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -51,9 +50,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(SolutionDir)\packages\CommandLineParser.1.9.71\lib\net40\CommandLine.dll</HintPath>
     </Reference>
-    <Reference Include="LibGit2Sharp">
-      <HintPath>$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\LibGit2Sharp.dll</HintPath>
-    </Reference>
     <Reference Include="Microsoft.Build" />
     <Reference Include="Microsoft.Build.Conversion.v4.0" />
     <Reference Include="Microsoft.Build.Engine" />
@@ -79,31 +75,32 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\build\net40\LibGit2Sharp.props'))" />
     <Error Condition="!Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Fody.1.26.1\build\Fody.targets'))" />
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <ItemGroup>
-    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\amd64\git2-91fa31f.dll">
-      <Link>costura64/%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
     <EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
       <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(SolutionDir)\packages\LibGit2Sharp.0.20.1.0\lib\net40\NativeBinaries\x86\git2-91fa31f.dll">
-      <Link>costura32/%(Filename)%(Extension)</Link>
     </EmbeddedResource>
     <EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
       <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </EmbeddedResource>
     <Content Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\deps\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+      <Project>{ee6ed99f-cb12-4683-b055-d28fc7357a34}</Project>
+      <Name>LibGit2Sharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="..\..\packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" />
   <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
@@ -143,6 +140,60 @@ foreach (var item in filesToCleanup)
     <CosturaCleanup Config="FodyWeavers.xml" Files="@(ReferenceCopyLocalPaths->'$(OutDir)%(DestinationSubDirectory)%(Filename)%(Extension)')" />
   </Target>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
+  <PropertyGroup Condition=" '$(OS)' == 'Windows_NT'">
+    <PreBuildEvent>pushd "$(SolutionDir)deps\libgit2sharp\libgit2"
+
+git rev-parse HEAD &gt; ..\LibGit2Sharp\libgit2_hash.txt
+set /p LIBGIT2_HASH=&lt; ..\LibGit2Sharp\libgit2_hash.txt
+set LIBGIT2_HASH=%25LIBGIT2_HASH:~0,7%25
+
+del /q /s "$(SolutionDir)src\updater\costura32\git*.dll"
+del /q /s "$(SolutionDir)src\updater\costura64\git*.dll"
+rmdir /q /s Build
+
+mkdir Build
+pushd Build
+
+mkdir x64
+pushd x64
+cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
+cmake --build . --target install
+popd
+
+mkdir x86
+pushd x86
+cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
+cmake --build . --target install
+popd
+
+popd
+</PreBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(OS)' != 'Windows_NT'">
+    <PreBuildEvent>cd "$(SolutionDir)deps\libgit2sharp\libgit2"
+
+LIBGIT2_HASH=$( git rev-parse HEAD )
+echo $LIBGIT2_HASH &gt; ../LibGit2Sharp/libgit2_hash.txt
+LIBGIT2_HASH=${LIBGIT2_HASH:0:7}
+
+rm -rf "$(SolutionDir)src/updater/costura32"/git*.so "$(SolutionDir)src/updater/costura64"/git*.so Build
+
+mkdir -p Build/x64 Build/x86
+
+cd Build
+
+cd x64
+cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
+cmake --build . --target install
+cd ..
+
+cd x86
+cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
+cmake --build . --target install
+cd ..
+</PreBuildEvent>
+  </PropertyGroup>
+  <!-- TODO: Post-build event for Mono (linux binaries for git2) -->
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

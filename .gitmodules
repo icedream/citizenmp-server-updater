@@ -1,0 +1,4 @@
+[submodule "deps/libgit2sharp"]
+	path = deps/libgit2sharp
+	url = git://github.com/libgit2/libgit2sharp.git
+	branch = master
