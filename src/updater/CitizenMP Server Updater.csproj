@@ -88,12 +88,10 @@
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
   </Target>
   <ItemGroup>
-    <EmbeddedResource Include="$(ProjectDir)\costura64\**\*">
-      <Link>costura64/%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
-    <EmbeddedResource Include="$(ProjectDir)\costura32\**\*">
-      <Link>costura32/%(RecursiveDir)%(Filename)%(Extension)</Link>
-    </EmbeddedResource>
+    <EmbeddedResource Include="costura32\git2-91fa31f.dll" />
+    <EmbeddedResource Include="costura64\git2-91fa31f.dll" />
+    <EmbeddedResource Include="costura32\*.so" />
+    <EmbeddedResource Include="costura64\*.so" />
     <Content Include="FodyWeavers.xml" />
   </ItemGroup>
   <ItemGroup>
