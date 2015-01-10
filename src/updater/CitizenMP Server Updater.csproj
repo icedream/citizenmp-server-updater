@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CitizenMP.Server.Installer</RootNamespace>
-    <AssemblyName>citimp_upd</AssemblyName>
+    <AssemblyName>citizenmp_server_updater</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>49f15a44</NuGetPackageImportStamp>
@@ -25,6 +25,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
+    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -36,11 +37,11 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)\bin\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)\obj\$(TargetName)\$(Configuration)\$(Platform)\</IntDir>
-    <IntermediateOutputPath>$(SolutionDir)\obj\$(TargetName)\$(Configuration)\$(Platform)\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>$(SolutionDir)\obj\$(TargetName)\$(Configuration)\$(Platform)\</BaseIntermediateOutputPath>
-    <OutputPath>$(SolutionDir)\bin\$(Configuration)\$(Platform)\</OutputPath>
+    <OutDir>$(SolutionDir)\bin\$(Configuration)\$(Platform)\$(AssemblyName)\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(AssemblyName)\$(Configuration)\$(Platform)\</IntDir>
+    <IntermediateOutputPath>$(SolutionDir)\obj\$(AssemblyName)\$(Configuration)\$(Platform)\</IntermediateOutputPath>
+    <BaseIntermediateOutputPath>$(SolutionDir)\obj\$(AssemblyName)\$(Configuration)\$(Platform)\</BaseIntermediateOutputPath>
+    <OutputPath>$(SolutionDir)\bin\$(Configuration)\$(Platform)\$(AssemblyName)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>CitizenMP.Server.Installer.Program</StartupObject>
