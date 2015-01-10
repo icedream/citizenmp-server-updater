@@ -67,7 +67,7 @@
     <ProjectReference Include="..\updater\CitizenMP Server Updater.csproj">
       <Project>{ddf5040e-9c6c-4686-800b-d4563c289f01}</Project>
       <Name>CitizenMP Server Updater</Name>
-      <Private>False</Private>
+      <Private>True</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
