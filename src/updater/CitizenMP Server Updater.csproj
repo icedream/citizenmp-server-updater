@@ -11,7 +11,7 @@
     <AssemblyName>citizenmp_server_updater</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>49f15a44</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>8d59ce5d</NuGetPackageImportStamp>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -85,8 +85,8 @@
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\..\packages\Fody.1.26.1\build\Fody.targets'))" />
     <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)\packages\Fody.1.26.1\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\packages\Fody.1.26.1\build\Fody.targets'))" />
   </Target>
   <ItemGroup>
     <EmbeddedResource Include="costura32\git2-91fa31f.dll" />
@@ -98,12 +98,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\deps\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
+    <ProjectReference Include="$(SolutionDir)deps\libgit2sharp\LibGit2Sharp\LibGit2Sharp.csproj">
       <Project>{ee6ed99f-cb12-4683-b055-d28fc7357a34}</Project>
       <Name>LibGit2Sharp</Name>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="..\..\packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.26.1\build\Fody.targets')" />
   <UsingTask TaskName="CosturaCleanup" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll" TaskFactory="CodeTaskFactory">
     <ParameterGroup>
       <Config Output="false" Required="true" ParameterType="Microsoft.Build.Framework.ITaskItem" />
@@ -199,7 +198,7 @@ if [ ! -e "$(SolutionDir)src/updater/costura32"/git*.so ]; then
 fi
 </PreBuildEvent>
   </PropertyGroup>
-  <!-- TODO: Post-build event for Mono (linux binaries for git2) -->
+  <Import Project="$(SolutionDir)packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('$(SolutionDir)packages\Fody.1.26.1\build\Fody.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
