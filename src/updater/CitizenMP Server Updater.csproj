@@ -143,54 +143,59 @@ foreach (var item in filesToCleanup)
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT'">
     <PreBuildEvent>pushd "$(SolutionDir)deps\libgit2sharp\libgit2"
 
-git rev-parse HEAD &gt; ..\LibGit2Sharp\libgit2_hash.txt
 set /p LIBGIT2_HASH=&lt; ..\LibGit2Sharp\libgit2_hash.txt
 set LIBGIT2_HASH=%25LIBGIT2_HASH:~0,7%25
-
-del /q /s "$(SolutionDir)src\updater\costura32\git*.dll"
-del /q /s "$(SolutionDir)src\updater\costura64\git*.dll"
-rmdir /q /s Build
 
 mkdir Build
 pushd Build
 
-mkdir x64
-pushd x64
-cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
-cmake --build . --config Release --target install
-popd
+if not exist "$(SolutionDir)src\updater\costura64\git2-%25LIBGIT2_HASH%25.dll" (
+	rmdir /q /s x64
+	mkdir x64
+	pushd x64
+	cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
+	cmake --build . --config Release --target install
+	popd
+)
 
-mkdir x86
-pushd x86
-cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
-cmake --build . --config Release --target install
-popd
+if not exist "$(SolutionDir)src\updater\costura32\git2-%25LIBGIT2_HASH%25.dll" (
+	rmdir /q /s x86
+	mkdir x86
+	pushd x86
+	cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
+	cmake --build . --config Release --target install
+	popd
+)
 
-popd
-</PreBuildEvent>
+popd</PreBuildEvent>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(OS)' != 'Windows_NT'">
     <PreBuildEvent>cd "$(SolutionDir)deps\libgit2sharp\libgit2"
 
-LIBGIT2_HASH=$( git rev-parse HEAD )
-echo $LIBGIT2_HASH &gt; ../LibGit2Sharp/libgit2_hash.txt
+LIBGIT2_HASH=$(cat ../LibGit2Sharp/libgit2_hash.txt)
 LIBGIT2_HASH=${LIBGIT2_HASH:0:7}
 
-rm -rf "$(SolutionDir)src/updater/costura32"/git*.so "$(SolutionDir)src/updater/costura64"/git*.so Build
-
-mkdir -p Build/x64 Build/x86
+mkdir -p Build
 
 cd Build
 
-cd x64
-cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
-cmake --build . --target install
-cd ..
+if [ ! -e "$(SolutionDir)src/updater/costura64"/git*.so ]; then
+	rm -rf x64
+	mkdir -p x64
+	cd x64
+	cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura64" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -Ax64 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="x86_64"
+	cmake --build . --target install
+	cd ..
+fi
 
-cd x86
-cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
-cmake --build . --target install
-cd ..
+if [ ! -e "$(SolutionDir)src/updater/costura32"/git*.so ]; then
+	rm -rf x86
+	mkdir -p x86
+	cd x86
+	cmake ../.. "-DCMAKE_INSTALL_PREFIX=%25cd%25" "-DBIN_INSTALL_DIR=$(SolutionDir)src\updater\costura32" -DCMAKE_BUILD_TYPE=Release -DBUILD_CLAR:BOOL=OFF -AWin32 -DUSE_SSH=OFF -DENABLE_TRACE=ON -DLIBGIT2_FILENAME=git2-%25LIBGIT2_HASH%25 -DCMAKE_OSX_ARCHITECTURES="i386"
+	cmake --build . --target install
+	cd ..
+fi
 </PreBuildEvent>
   </PropertyGroup>
   <!-- TODO: Post-build event for Mono (linux binaries for git2) -->
