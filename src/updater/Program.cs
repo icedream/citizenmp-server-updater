@@ -202,7 +202,7 @@ namespace CitizenMP.Server.Installer
             {
                 {"Configuration", "Release"},
                 {"Platform", "Any CPU"},
-                {"DebugType", "None"},
+                {"DebugType", IsWin32() ? "None" : "pdbonly" },
                 {"DebugSymbols", false.ToString()},
                 {"OutputPath", binOutputDirectory.FullName},
                 {"AllowedReferenceRelatedFileExtensions", "\".mdb\"=\"\";\".pdb\"=\"\";\".xml\"=\"\""}
