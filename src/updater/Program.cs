@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using CommandLine;
@@ -11,6 +13,7 @@ using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Mono.Unix.Native;
+using Project = Microsoft.Build.BuildEngine.Project;
 using UnixSyscall = Mono.Unix.Native.Syscall;
 
 namespace CitizenMP.Server.Installer
@@ -112,10 +115,11 @@ namespace CitizenMP.Server.Installer
                 if (serverBins.Any())
                 {
                     var serverAssembly = Assembly.LoadFile(serverBins.First().FullName);
-                    var configurationAttribs = serverAssembly.GetCustomAttributes(typeof(AssemblyConfigurationAttribute), false);
+                    var configurationAttribs =
+                        serverAssembly.GetCustomAttributes(typeof (AssemblyConfigurationAttribute), false);
                     if (configurationAttribs.Any())
                     {
-                        var configurationAttrib = (AssemblyConfigurationAttribute)configurationAttribs.First();
+                        var configurationAttrib = (AssemblyConfigurationAttribute) configurationAttribs.First();
                         foreach (var commitHash in configurationAttrib.Configuration.Split(' ')
                             .Where(section => section.StartsWith("CommitHash="))
                             .Select(section => section.Split('=').Last()))
@@ -193,7 +197,8 @@ namespace CitizenMP.Server.Installer
             var slnPath = sourceDirectory.EnumerateFiles("*.sln", SearchOption.TopDirectoryOnly)
                 .First().FullName;
             outputDirectory.Create();
-            if (Build(slnPath, new Dictionary<string, string>
+            var logpath = Path.Combine(outputDirectory.FullName, "build.log");
+            if (!Build(slnPath, new Dictionary<string, string>
             {
                 {"Configuration", "Release"},
                 {"Platform", "Any CPU"},
@@ -201,9 +206,9 @@ namespace CitizenMP.Server.Installer
                 {"DebugSymbols", false.ToString()},
                 {"OutputPath", binOutputDirectory.FullName},
                 {"AllowedReferenceRelatedFileExtensions", "\".mdb\"=\"\";\".pdb\"=\"\";\".xml\"=\"\""}
-            }, Path.Combine(outputDirectory.FullName, "build.log")).OverallResult == BuildResultCode.Failure)
+            }, logpath))
             {
-                Console.Error.WriteLine("Build failed!");
+                Console.Error.WriteLine("Build failed! Please look at {0} for more information.", logpath);
                 return 1;
             }
 
@@ -274,44 +279,124 @@ namespace CitizenMP.Server.Installer
             return 0;
         }
 
-        private static BuildResult Build(string solutionFilePath, IDictionary<string, string> buildProperties,
+        private static bool Build(string projectFilePath, IDictionary<string, string> buildProperties,
             string logPath = null)
         {
-            var pc = new ProjectCollection();
-            pc.RegisterLogger(new ConsoleLogger(LoggerVerbosity.Minimal));
-
-            var buildReq = new BuildRequestData(solutionFilePath, buildProperties, null, new[] {"Build"}, null);
-
-            // Save environment
-            var oldMonoInputOutputMapping = Environment.GetEnvironmentVariable("MONO_IOMAP");
+            var workspace = new FileInfo(projectFilePath).Directory;
+            if (workspace == null)
+                throw new DirectoryNotFoundException(
+                    "Somehow the project file is not in a directory. Report this to Icedream!");
 
             // Mono compatibility
             Environment.SetEnvironmentVariable("MONO_IOMAP", "all");
 
-            var result = BuildManager.DefaultBuildManager.Build(
-                new BuildParameters(pc)
+            try
+            {
+                var pc = new ProjectCollection();
+                pc.RegisterLogger(new ConsoleLogger(LoggerVerbosity.Minimal));
+
+                // Generate meta project for solution
+                var isSolution = projectFilePath.EndsWith(".sln");
+                if (isSolution && !IsWin32())
                 {
-                    Loggers =
-                        new[]
+                    // Import Mozilla certs for NuGet to not fail out
+                    try
+                    {
+                        Run("mozroots", "--import --sync");
+                        Run("sh", "-c \"yes y | certmgr -ssl https://go.microsoft.com\"");
+                        Run("sh", "-c \"yes y | certmgr -ssl https://nugetgallery.blob.core.windows.net\"");
+                        Run("sh", "-c \"yes y | certmgr -ssl https://nuget.org\"");
+                    }
+                    catch (Exception error)
+                    {
+                        Console.Error.WriteLine("ERROR: {0}", error.Message);
+                        throw;
+                    }
+
+                    // Mono doesn't work with the new API, use the deprecated api
+#pragma warning disable 618
+
+                    /*
+                    // Attempt at using new API, doesn't find Build task.
+                    var tmpProject = new Microsoft.Build.BuildEngine.Project();
+                    var slnParser = new SolutionParser();
+                    slnParser.ParseSolution(projectFilePath, tmpProject, (number, message) =>
+                    {
+                        Console.Error.WriteLine("WARNING: While parsing solution file - #{0}: {1}", number, message);
+                    });
+                    projectFilePath = projectFilePath + ".proj";
+                    tmpProject.Save(projectFilePath);*/
+
+                    Engine.GlobalEngine.RegisterLogger(new FileLogger {Parameters = logPath});
+
+                    var project = new Project(Engine.GlobalEngine) {BuildEnabled = true};
+                    project.Load(projectFilePath);
+                    foreach (var property in buildProperties)
+                        project.GlobalProperties.SetProperty(property.Key, property.Value);
+                    var result = project.Build();
+#pragma warning restore 618
+                    return result;
+                }
+
+                {
+                    var buildReq = new BuildRequestData(projectFilePath, buildProperties, null, new[] {"Build"}, null);
+
+                    var result = BuildManager.DefaultBuildManager.Build(
+                        new BuildParameters(pc)
                         {
-                            logPath != null
-                                ? new FileLogger
+                            Loggers =
+                                new[]
                                 {
-                                    Parameters =
-                                        "logfile=" + logPath,
-                                    Verbosity = LoggerVerbosity.Detailed,
-                                    ShowSummary = true,
-                                    SkipProjectStartedText = true
-                                }
-                                : new ConsoleLogger(LoggerVerbosity.Quiet)
-                        },
-                    MaxNodeCount = Environment.ProcessorCount
-                }, buildReq);
+                                    logPath != null
+                                        ? new FileLogger
+                                        {
+                                            Parameters =
+                                                "logfile=" + logPath,
+                                            Verbosity = LoggerVerbosity.Detailed,
+                                            ShowSummary = true,
+                                            SkipProjectStartedText = true
+                                        }
+                                        : new ConsoleLogger(LoggerVerbosity.Quiet)
+                                },
+                            MaxNodeCount = Environment.ProcessorCount
+                        }, buildReq);
 
-            // Restore environment
-            Environment.SetEnvironmentVariable("MONO_IOMAP", oldMonoInputOutputMapping);
+                    return result.OverallResult == BuildResultCode.Success;
+                }
+            }
+            finally
+            {
+                if (projectFilePath.EndsWith(".proj"))
+                    File.Delete(projectFilePath);
+            }
+        }
 
-            return result;
+        private static void Run(string name, string args)
+        {
+            var p = new Process
+            {
+                StartInfo =
+                {
+                    Arguments = args,
+                    FileName = name,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                }
+            };
+            p.Start();
+            p.WaitForExit();
+            if (p.ExitCode != 0)
+            {
+                throw new Exception(String.Format("Process \"{0} {1}\" exited with error code {2}", name, args,
+                    p.ExitCode));
+            }
+        }
+
+        private static bool IsWin32()
+        {
+            return Environment.OSVersion.Platform == PlatformID.Win32NT ||
+                   Environment.OSVersion.Platform == PlatformID.Win32S ||
+                   Environment.OSVersion.Platform == PlatformID.Win32Windows;
         }
     }
 }
