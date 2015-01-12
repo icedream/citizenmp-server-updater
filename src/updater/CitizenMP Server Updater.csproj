@@ -11,7 +11,7 @@
     <AssemblyName>citizenmp_server_updater</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <NuGetPackageImportStamp>fe2835f3</NuGetPackageImportStamp>
+    <NuGetPackageImportStamp>95b7e825</NuGetPackageImportStamp>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\..\</SolutionDir>
     <RestorePackages>true</RestorePackages>
@@ -89,6 +89,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('$(SolutionDir).nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir).nuget\NuGet.targets'))" />
     <Error Condition="!Exists('$(SolutionDir)packages\Fody.1.26.4\build\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)packages\Fody.1.26.4\build\Fody.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)packages\GitVersionTask.2.0.0\Build\GitVersionTask.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)packages\GitVersionTask.2.0.0\Build\GitVersionTask.targets'))" />
   </Target>
   <ItemGroup>
     <EmbeddedResource Include="costura32\git2-91fa31f.dll" />
@@ -202,6 +203,7 @@ fi
   </PropertyGroup>
   <Import Project="$(SolutionDir)packages\Fody.1.26.1\build\Fody.targets" Condition="Exists('$(SolutionDir)packages\Fody.1.26.1\build\Fody.targets')" />
   <Import Project="$(SolutionDir)packages\Fody.1.26.4\build\Fody.targets" Condition="Exists('..\..\packages\Fody.1.26.4\build\Fody.targets')" />
+  <Import Project="$(SolutionDir)packages\GitVersionTask.2.0.0\Build\GitVersionTask.targets" Condition="Exists('..\..\packages\GitVersionTask.2.0.0\Build\GitVersionTask.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
