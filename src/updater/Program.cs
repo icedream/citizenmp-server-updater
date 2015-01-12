@@ -233,7 +233,7 @@ namespace CitizenMP.Server.Installer
             var slnPath = sourceDirectory.EnumerateFiles("*.sln", SearchOption.TopDirectoryOnly)
                 .First().FullName;
             outputDirectory.Create();
-            var logpath = Path.Combine(outputDirectory.FullName, "build.log");
+            var logpath = options.WriteLogFile ? Path.Combine(outputDirectory.FullName, "build.log") : null;
             if (!Build(slnPath, new Dictionary<string, string>
             {
                 {"Configuration", "Release"},
