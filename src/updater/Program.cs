@@ -290,6 +290,23 @@ namespace CitizenMP.Server.Installer
             // Mono compatibility
             Environment.SetEnvironmentVariable("MONO_IOMAP", "all");
 
+            {
+                // The NuGet.exe that is shipped with CitizenMP.Server has a few bugs...
+                var nugetExePath = Path.Combine(workspace.FullName, ".nuget", "NuGet.exe");
+                Console.WriteLine("Updating NuGet...");
+                File.Delete(nugetExePath);
+                using (var wc = new WebClient())
+                {
+                    wc.DownloadFile("https://nuget.org/NuGet.exe", nugetExePath);
+                }
+            }
+
+            // Make sure we restore nuget packages automatically and without permissions interfering with /tmp/nuget/ (edge case)
+            var newTempDir = workspace.CreateSubdirectory(".tmp");
+            Environment.SetEnvironmentVariable("EnableNuGetPackageRestore", "true");
+            Environment.SetEnvironmentVariable("TEMP", newTempDir.FullName);
+            Environment.SetEnvironmentVariable("TMP", newTempDir.FullName);
+
             try
             {
                 var pc = new ProjectCollection();
@@ -368,6 +385,8 @@ namespace CitizenMP.Server.Installer
             {
                 if (projectFilePath.EndsWith(".proj"))
                     File.Delete(projectFilePath);
+
+                newTempDir.Delete(true);
             }
         }
 
