@@ -67,6 +67,42 @@ namespace CitizenMP.Server.Installer
                 return -2;
             }
 
+            if (options.ShowVersion)
+            {
+                var version =
+                    Regex.Match(
+                        Assembly.GetExecutingAssembly()
+                            .GetCustomAttributes(typeof (AssemblyInformationalVersionAttribute), false)
+                            .OfType<AssemblyInformationalVersionAttribute>().First().InformationalVersion,
+                            @"^(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<revision>[0-9]+)(\-(?<prerelease>[A-z0-9\.]+))?(\+(?<meta>.+?))?$");
+
+                var meta = new Queue<string>(version.Groups["meta"].Value.Split('.'));
+                while (meta.Any() && meta.First() != "Branch")
+                {
+                    meta.Dequeue();
+                }
+
+                var metaDict = new Dictionary<string, string>();
+                while (meta.Any())
+                {
+                    var name = meta.Dequeue();
+                    var value = meta.Dequeue();
+                    if (meta.Any() && char.IsDigit(meta.First().First()))
+                    {
+                        value += "." + meta.Dequeue();
+                    }
+                    metaDict.Add(name, value);
+                }
+
+                Console.WriteLine("{0}.{1}.{2}{3}{4}",
+                    version.Groups["major"].Value,
+                    version.Groups["minor"].Value,
+                    version.Groups["revision"].Value,
+                    version.Groups["prerelease"].Success ? "-" + version.Groups["prerelease"].Value : "",
+                    metaDict.Any() ? " (" + metaDict["Sha"].Substring(0, 7) + ")" : "");
+                return 0;
+            }
+
             if (string.IsNullOrEmpty(options.OutputPath))
             {
                 Console.Error.WriteLine("ERROR: No output directory given.");

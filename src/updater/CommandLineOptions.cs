@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using CommandLine;
 using CommandLine.Text;
@@ -22,6 +20,9 @@ namespace CitizenMP.Server.Installer
 
         [ValueOption(0)]
         public string OutputPath { get; set; }
+
+        [Option("version", DefaultValue=false, HelpText="Shows this tool's version.")]
+        public bool ShowVersion { get; set; }
 
         [HelpOption]
         public string GetUsage()
