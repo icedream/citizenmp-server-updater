@@ -229,7 +229,7 @@ namespace CitizenMP.Server.Installer
                             @"#!/bin/bash",
                             @"",
                             @"# switch to the script directory",
-                            @"cd ""$( dirname ""${BASH_SOURCE[0]}""",
+                            @"cd ""$( dirname ""${BASH_SOURCE[0]}"" )""",
                             @"",
                             @"# run with mono",
                             @"mono ""bin/" + binOutputDirectory.EnumerateFiles("*.exe").First().Name + @""" $@",
