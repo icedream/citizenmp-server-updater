@@ -28,7 +28,6 @@ namespace CitizenMP.Server.Installer
         public string GetUsage()
         {
             var programInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-            var assembly = Assembly.GetExecutingAssembly();
 
             var help = new HelpText
             {
