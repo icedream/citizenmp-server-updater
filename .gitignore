@@ -102,3 +102,6 @@ UpgradeLog*.htm
 # Microsoft Fakes
 FakesAssemblies/
 src/updater/costura??/git2-???????.dll
+
+# Test playground
+test/
