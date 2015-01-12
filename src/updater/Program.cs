@@ -321,7 +321,7 @@ namespace CitizenMP.Server.Installer
                     ShowSummary = true,
                     SkipProjectStartedText = true
                 });
-                loggers.Add(new ConsoleLogger(LoggerVerbosity.Minimal) { ShowSummary = false, SkipProjectStartedText = true });
+                loggers.Add(new ConsoleLogger(LoggerVerbosity.Quiet) { ShowSummary = false });
 
                 // Use a different build route if running on the Mono interpreter
                 if (!IsWin32())
@@ -330,11 +330,11 @@ namespace CitizenMP.Server.Installer
                     try
                     {
                         // TODO: Make sure this does not fail out by checking if mozroots is installed
-                        Run("mozroots", "--import --sync");
-                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://go.microsoft.com\"");
-                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nugetgallery.blob.core.windows.net\"");
-                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nuget.org\"");
                         Console.WriteLine("Updating SSL certificates for NuGet...");
+                        Run("mozroots", "--import --sync --quiet");
+                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://go.microsoft.com\" 2>/dev/null");
+                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://nugetgallery.blob.core.windows.net\" 2>/dev/null");
+                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://nuget.org\" 2>/dev/null");
                     }
                     catch (Exception error)
                     {
