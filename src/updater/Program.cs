@@ -193,7 +193,7 @@ namespace CitizenMP.Server.Installer
 
 
             // Build project
-            Console.WriteLine("Building server binaries...");
+            //Console.WriteLine("Building server binaries...");
             var slnPath = sourceDirectory.EnumerateFiles("*.sln", SearchOption.TopDirectoryOnly)
                 .First().FullName;
             outputDirectory.Create();
@@ -334,6 +334,7 @@ namespace CitizenMP.Server.Installer
                         Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://go.microsoft.com\"");
                         Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nugetgallery.blob.core.windows.net\"");
                         Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nuget.org\"");
+                        Console.WriteLine("Updating SSL certificates for NuGet...");
                     }
                     catch (Exception error)
                     {
@@ -342,6 +343,7 @@ namespace CitizenMP.Server.Installer
                     }
 
                     // Build doesn't work with the new API on Mono, use the deprecated api
+                    Console.WriteLine("Building server binaries...");
 #pragma warning disable 618
                     foreach (var logger in loggers)
                         Engine.GlobalEngine.RegisterLogger(logger);
@@ -356,6 +358,8 @@ namespace CitizenMP.Server.Installer
 
                 // Windows build can make use of the new API which is more efficient
                 {
+                    Console.WriteLine("Building server binaries...");
+
                     var buildReq = new BuildRequestData(projectFilePath, buildProperties, null, new[] {"Build"}, null);
 
                     var result = BuildManager.DefaultBuildManager.Build(
