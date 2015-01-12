@@ -202,7 +202,7 @@ namespace CitizenMP.Server.Installer
             {
                 {"Configuration", "Release"},
                 {"Platform", "Any CPU"},
-                {"DebugType", IsWin32() ? "None" : "pdbonly" },
+                {"DebugType", IsWin32() ? "None" : "pdbonly"},
                 {"DebugSymbols", false.ToString()},
                 {"OutputPath", binOutputDirectory.FullName},
                 {"AllowedReferenceRelatedFileExtensions", "\".mdb\"=\"\";\".pdb\"=\"\";\".xml\"=\"\""}
@@ -290,17 +290,6 @@ namespace CitizenMP.Server.Installer
             // Mono compatibility
             Environment.SetEnvironmentVariable("MONO_IOMAP", "all");
 
-            {
-                // The NuGet.exe that is shipped with CitizenMP.Server has a few bugs...
-                var nugetExePath = Path.Combine(workspace.FullName, ".nuget", "NuGet.exe");
-                Console.WriteLine("Updating NuGet...");
-                File.Delete(nugetExePath);
-                using (var wc = new WebClient())
-                {
-                    wc.DownloadFile("https://nuget.org/NuGet.exe", nugetExePath);
-                }
-            }
-
             // Make sure we restore nuget packages automatically and without permissions interfering with /tmp/nuget/ (edge case)
             var newTempDir = workspace.CreateSubdirectory(".tmp");
             Environment.SetEnvironmentVariable("EnableNuGetPackageRestore", "true");
@@ -315,18 +304,17 @@ namespace CitizenMP.Server.Installer
                 var loggers = new List<ILogger>();
                 if (logPath != null)
                     loggers.Add(new FileLogger
-                {
-                    Parameters = string.Format("LogFile={0}", logPath),
-                    Verbosity = LoggerVerbosity.Detailed,
-                    ShowSummary = true,
-                    SkipProjectStartedText = true
-                });
-                loggers.Add(new ConsoleLogger(LoggerVerbosity.Quiet) { ShowSummary = false });
+                    {
+                        Parameters = string.Format("LogFile={0}", logPath),
+                        Verbosity = LoggerVerbosity.Detailed,
+                        ShowSummary = true,
+                        SkipProjectStartedText = true
+                    });
+                loggers.Add(new ConsoleLogger(LoggerVerbosity.Quiet) {ShowSummary = false});
 
-                // Use a different build route if running on the Mono interpreter
+                // Import/Update Mozilla certs for NuGet to not fail out on non-Windows machines
                 if (!IsWin32())
                 {
-                    // Import Mozilla certs for NuGet to not fail out
                     try
                     {
                         // TODO: Make sure this does not fail out by checking if mozroots is installed
@@ -341,7 +329,22 @@ namespace CitizenMP.Server.Installer
                         Console.Error.WriteLine("ERROR: {0}", error.Message);
                         throw;
                     }
+                }
 
+                {
+                    // The NuGet.exe that is shipped with CitizenMP.Server has a few bugs...
+                    var nugetExePath = Path.Combine(workspace.FullName, ".nuget", "NuGet.exe");
+                    Console.WriteLine("Updating NuGet...");
+                    File.Delete(nugetExePath);
+                    using (var wc = new WebClient())
+                    {
+                        wc.DownloadFile("https://nuget.org/NuGet.exe", nugetExePath);
+                    }
+                }
+
+                // Use a different build route if running on the Mono interpreter
+                if (!IsWin32())
+                {
                     // Build doesn't work with the new API on Mono, use the deprecated api
                     Console.WriteLine("Building server binaries...");
 #pragma warning disable 618
