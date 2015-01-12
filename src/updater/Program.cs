@@ -319,10 +319,11 @@ namespace CitizenMP.Server.Installer
                     // Import Mozilla certs for NuGet to not fail out
                     try
                     {
+                        // TODO: Make sure this does not fail out by checking if mozroots is installed
                         Run("mozroots", "--import --sync");
-                        Run("sh", "-c \"yes y | certmgr -ssl https://go.microsoft.com\"");
-                        Run("sh", "-c \"yes y | certmgr -ssl https://nugetgallery.blob.core.windows.net\"");
-                        Run("sh", "-c \"yes y | certmgr -ssl https://nuget.org\"");
+                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://go.microsoft.com\"");
+                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nugetgallery.blob.core.windows.net\"");
+                        Run("sh", "-c \"yes y 2>NUL | certmgr -ssl https://nuget.org\"");
                     }
                     catch (Exception error)
                     {
