@@ -74,7 +74,7 @@ namespace CitizenMP.Server.Installer
                         Assembly.GetExecutingAssembly()
                             .GetCustomAttributes(typeof (AssemblyInformationalVersionAttribute), false)
                             .OfType<AssemblyInformationalVersionAttribute>().First().InformationalVersion,
-                            @"^(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<revision>[0-9]+)(\-(?<prerelease>[A-z0-9\.]+))?(\+(?<meta>.+?))?$");
+                        @"^(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<revision>[0-9]+)(\-(?<prerelease>[A-z0-9\.]+))?(\+(?<meta>.+?))?$");
 
                 var meta = new Queue<string>(version.Groups["meta"].Value.Split('.'));
                 while (meta.Any() && meta.First() != "Branch")
@@ -242,7 +242,7 @@ namespace CitizenMP.Server.Installer
                 {"DebugSymbols", false.ToString()},
                 {"OutputPath", binOutputDirectory.FullName},
                 {"AllowedReferenceRelatedFileExtensions", "\".mdb\"=\"\";\".pdb\"=\"\";\".xml\"=\"\""}
-            }, logpath))
+            }, options.Verbosity, logpath))
             {
                 Console.Error.WriteLine("Build failed! Please look at {0} for more information.", logpath);
                 return 1;
@@ -316,7 +316,7 @@ namespace CitizenMP.Server.Installer
         }
 
         private static bool Build(string projectFilePath, IDictionary<string, string> buildProperties,
-            string logPath = null)
+            LoggerVerbosity verbosity, string logPath = null)
         {
             var workspace = new FileInfo(projectFilePath).Directory;
             if (workspace == null)
@@ -335,7 +335,7 @@ namespace CitizenMP.Server.Installer
             try
             {
                 var pc = new ProjectCollection();
-                pc.RegisterLogger(new ConsoleLogger(LoggerVerbosity.Minimal));
+                pc.RegisterLogger(new ConsoleLogger(verbosity));
 
                 var loggers = new List<ILogger>();
                 if (logPath != null)
@@ -346,7 +346,7 @@ namespace CitizenMP.Server.Installer
                         ShowSummary = true,
                         SkipProjectStartedText = true
                     });
-                loggers.Add(new ConsoleLogger(LoggerVerbosity.Quiet) {ShowSummary = false});
+                loggers.Add(new ConsoleLogger(verbosity) {ShowSummary = false});
 
                 // Import/Update Mozilla certs for NuGet to not fail out on non-Windows machines
                 if (!IsWin32())
@@ -426,14 +426,15 @@ namespace CitizenMP.Server.Installer
 
         private static void Run(string name, string args, Action<string, StreamWriter> lineProcessor = null)
         {
-            using (var p = Process.Start(new ProcessStartInfo {
-                    Arguments = args,
-                    FileName = name,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardInput = lineProcessor != null,
-                    RedirectStandardOutput = lineProcessor != null
-                }))
+            using (var p = Process.Start(new ProcessStartInfo
+            {
+                Arguments = args,
+                FileName = name,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardInput = lineProcessor != null,
+                RedirectStandardOutput = lineProcessor != null
+            }))
             {
                 if (lineProcessor == null)
                 {
