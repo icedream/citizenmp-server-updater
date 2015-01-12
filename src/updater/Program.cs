@@ -312,6 +312,19 @@ namespace CitizenMP.Server.Installer
                 var pc = new ProjectCollection();
                 pc.RegisterLogger(new ConsoleLogger(LoggerVerbosity.Minimal));
 
+                var loggers = new List<ILogger>();
+                if (logPath != null)
+                    loggers.Add(new FileLogger
+                {
+                    Parameters = string.Format("LogFile={0}", logPath),
+                    Verbosity = LoggerVerbosity.Detailed,
+                    ShowSummary = true,
+                    SkipProjectStartedText = true
+                });
+                loggers.Add(new ConsoleLogger(LoggerVerbosity.Minimal) { ShowSummary = false, SkipProjectStartedText = true });
+
+                // Use a different build route if running on the Mono interpreter
+                if (!IsWin32())
                 {
                     // Import Mozilla certs for NuGet to not fail out
                     try
@@ -330,6 +343,8 @@ namespace CitizenMP.Server.Installer
 
                     // Build doesn't work with the new API on Mono, use the deprecated api
 #pragma warning disable 618
+                    foreach (var logger in loggers)
+                        Engine.GlobalEngine.RegisterLogger(logger);
                     var project = new Project(Engine.GlobalEngine) {BuildEnabled = true};
                     project.Load(projectFilePath);
                     foreach (var property in buildProperties)
@@ -346,20 +361,7 @@ namespace CitizenMP.Server.Installer
                     var result = BuildManager.DefaultBuildManager.Build(
                         new BuildParameters(pc)
                         {
-                            Loggers =
-                                new[]
-                                {
-                                    logPath != null
-                                        ? new FileLogger
-                                        {
-                                            Parameters =
-                                                "logfile=" + logPath,
-                                            Verbosity = LoggerVerbosity.Detailed,
-                                            ShowSummary = true,
-                                            SkipProjectStartedText = true
-                                        }
-                                        : new ConsoleLogger(LoggerVerbosity.Quiet)
-                                },
+                            Loggers = loggers.ToArray(),
                             MaxNodeCount = Environment.ProcessorCount
                         }, buildReq);
 
