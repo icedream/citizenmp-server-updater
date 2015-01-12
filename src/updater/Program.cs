@@ -312,9 +312,6 @@ namespace CitizenMP.Server.Installer
                 var pc = new ProjectCollection();
                 pc.RegisterLogger(new ConsoleLogger(LoggerVerbosity.Minimal));
 
-                // Generate meta project for solution
-                var isSolution = projectFilePath.EndsWith(".sln");
-                if (isSolution && !IsWin32())
                 {
                     // Import Mozilla certs for NuGet to not fail out
                     try
@@ -331,22 +328,8 @@ namespace CitizenMP.Server.Installer
                         throw;
                     }
 
-                    // Mono doesn't work with the new API, use the deprecated api
+                    // Build doesn't work with the new API on Mono, use the deprecated api
 #pragma warning disable 618
-
-                    /*
-                    // Attempt at using new API, doesn't find Build task.
-                    var tmpProject = new Microsoft.Build.BuildEngine.Project();
-                    var slnParser = new SolutionParser();
-                    slnParser.ParseSolution(projectFilePath, tmpProject, (number, message) =>
-                    {
-                        Console.Error.WriteLine("WARNING: While parsing solution file - #{0}: {1}", number, message);
-                    });
-                    projectFilePath = projectFilePath + ".proj";
-                    tmpProject.Save(projectFilePath);*/
-
-                    Engine.GlobalEngine.RegisterLogger(new FileLogger {Parameters = logPath});
-
                     var project = new Project(Engine.GlobalEngine) {BuildEnabled = true};
                     project.Load(projectFilePath);
                     foreach (var property in buildProperties)
@@ -356,6 +339,7 @@ namespace CitizenMP.Server.Installer
                     return result;
                 }
 
+                // Windows build can make use of the new API which is more efficient
                 {
                     var buildReq = new BuildRequestData(projectFilePath, buildProperties, null, new[] {"Build"}, null);
 
@@ -384,9 +368,6 @@ namespace CitizenMP.Server.Installer
             }
             finally
             {
-                if (projectFilePath.EndsWith(".proj"))
-                    File.Delete(projectFilePath);
-
                 newTempDir.Delete(true);
             }
         }
