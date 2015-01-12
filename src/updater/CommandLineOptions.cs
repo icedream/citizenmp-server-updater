@@ -55,9 +55,8 @@ namespace CitizenMP.Server.Installer
                 "This is free software. You may redistribute copies of it under the terms of the MIT License <http://www.opensource.org/licenses/mit-license.php>.");
 #endif
             help.AddPreOptionsLine(" ");
-            help.AddPreOptionsLine(string.Format("{0}{1} [options...] \"<targetpath>\"",
-                Process.GetCurrentProcess().ProcessName,
-                new FileInfo(Assembly.GetExecutingAssembly().Location).Extension));
+            help.AddPreOptionsLine(string.Format("{0} [options...] \"<targetpath>\"",
+                Process.GetCurrentProcess().ProcessName));
 
             help.AddOptions(this);
 
