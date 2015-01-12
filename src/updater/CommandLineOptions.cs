@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using CommandLine;
 using CommandLine.Text;
@@ -27,14 +28,30 @@ namespace CitizenMP.Server.Installer
         [HelpOption]
         public string GetUsage()
         {
-            var programInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+            var asm = Assembly.GetExecutingAssembly();
+
+            var productName =
+                asm.GetCustomAttributes(typeof (AssemblyTitleAttribute), false)
+                    .OfType<AssemblyTitleAttribute>()
+                    .Single()
+                    .Title;
+            var productVersion =
+                asm.GetCustomAttributes(typeof (AssemblyInformationalVersionAttribute), false)
+                    .OfType<AssemblyInformationalVersionAttribute>()
+                    .Single()
+                    .InformationalVersion;
+            var productCopyright =
+                asm.GetCustomAttributes(typeof (AssemblyCopyrightAttribute), false)
+                    .OfType<AssemblyCopyrightAttribute>()
+                    .Single()
+                    .Copyright;
 
             var help = new HelpText
             {
                 AddDashesToOption = true,
                 AdditionalNewLineAfterOption = true,
-                Copyright = programInfo.LegalCopyright,
-                Heading = new HeadingInfo(programInfo.ProductName, programInfo.ProductVersion),
+                Copyright = productCopyright,
+                Heading = new HeadingInfo(productName, productVersion),
                 MaximumDisplayWidth = Console.BufferWidth
             };
 
