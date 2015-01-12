@@ -317,12 +317,19 @@ namespace CitizenMP.Server.Installer
                 {
                     try
                     {
+                        var automaticYesResponder = new Action<string, StreamWriter>((s, writer) =>
+                        {
+                            if (s == null || !s.Contains("X.509 Certificate"))
+                                return;
+                            writer.WriteLine("y");
+                        });
+
                         // TODO: Make sure this does not fail out by checking if mozroots is installed
                         Console.WriteLine("Updating SSL certificates for NuGet...");
                         Run("mozroots", "--import --sync --quiet");
-                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://go.microsoft.com\" 2>/dev/null");
-                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://nugetgallery.blob.core.windows.net\" 2>/dev/null");
-                        Run("sh", "-c \"yes y 2>/dev/null | certmgr -ssl https://nuget.org\" 2>/dev/null");
+                        Run("certmgr", "-ssl https://go.microsoft.com", automaticYesResponder);
+                        Run("certmgr", "-ssl https://nugetgallery.blob.core.windows.net", automaticYesResponder);
+                        Run("certmgr", "-ssl https://nuget.org", automaticYesResponder);
                     }
                     catch (Exception error)
                     {
@@ -381,24 +388,35 @@ namespace CitizenMP.Server.Installer
             }
         }
 
-        private static void Run(string name, string args)
+        private static void Run(string name, string args, Action<string, StreamWriter> lineProcessor = null)
         {
-            var p = new Process
-            {
-                StartInfo =
-                {
+            using (var p = Process.Start(new ProcessStartInfo {
                     Arguments = args,
                     FileName = name,
                     UseShellExecute = false,
-                    CreateNoWindow = true
-                }
-            };
-            p.Start();
-            p.WaitForExit();
-            if (p.ExitCode != 0)
+                    CreateNoWindow = true,
+                    RedirectStandardInput = lineProcessor != null,
+                    RedirectStandardOutput = lineProcessor != null
+                }))
             {
-                throw new Exception(String.Format("Process \"{0} {1}\" exited with error code {2}", name, args,
-                    p.ExitCode));
+                if (lineProcessor == null)
+                {
+                    p.WaitForExit();
+                }
+                else
+                {
+                    while (!p.HasExited)
+                    {
+                        string line = p.StandardOutput.ReadLine();
+                        lineProcessor.Invoke(line, p.StandardInput);
+                    }
+                }
+
+                if (p.ExitCode != 0)
+                {
+                    throw new Exception(string.Format("Process \"{0} {1}\" exited with error code {2}",
+                        name, args, p.ExitCode));
+                }
             }
         }
 
