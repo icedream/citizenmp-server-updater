@@ -46,13 +46,14 @@ namespace CitizenMP.Server.Installer
             }
 
             help.AddPreOptionsLine(" ");
-#if NO_COMMANDLINE
+#if !NO_COMMANDLINE
             help.AddPreOptionsLine(((AssemblyLicenseAttribute)assembly
                 .GetCustomAttributes(typeof(AssemblyLicenseAttribute), false)
                 .Single()).Value.Trim());
-#endif
+#else
             help.AddPreOptionsLine(
                 "This is free software. You may redistribute copies of it under the terms of the MIT License <http://www.opensource.org/licenses/mit-license.php>.");
+#endif
             help.AddPreOptionsLine(" ");
             help.AddPreOptionsLine(string.Format("{0}{1} [options...] \"<targetpath>\"",
                 Process.GetCurrentProcess().ProcessName,
