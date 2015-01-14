@@ -36,7 +36,8 @@ sudo apt-get install mono-runtime libmono-system-core4.0-cil
 Guides
 ------
 
-- [Easy installation on Windows](docs/EasyInstall_Windows.md)
+- [Easy server installation on Windows](docs/EasyInstall_Windows.md)
+- [Server installation on Linux](docs/Terminal_Linux.md)
 
 Usage
 -----
