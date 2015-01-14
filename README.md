@@ -33,6 +33,11 @@ On Ubuntu and Debian you can just install all requirements with this command:
 sudo apt-get install mono-runtime libmono-system-core4.0-cil
 ```
 
+Guides
+------
+
+- [Easy installation on Windows](docs/EasyInstall_Windows.md)
+
 Usage
 -----
 
