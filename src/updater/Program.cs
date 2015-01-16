@@ -13,7 +13,6 @@ using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Mono.Unix.Native;
-using Project = Microsoft.Build.BuildEngine.Project;
 using UnixSyscall = Mono.Unix.Native.Syscall;
 
 namespace CitizenMP.Server.Installer
@@ -59,6 +58,13 @@ namespace CitizenMP.Server.Installer
 
         private static int Main(string[] args)
         {
+            var monoRun = RunWithMonoConfiguration(args);
+            if (monoRun.Item1)
+            {
+                // The main stuff already ran in a subprocess
+                return monoRun.Item2;
+            }
+
             // Parse cmdline arguments
             var options = new CommandLineOptions();
             //args = args.DefaultIfEmpty("--help").ToArray();
@@ -238,7 +244,7 @@ namespace CitizenMP.Server.Installer
             {
                 {"Configuration", "Release"},
                 {"Platform", "Any CPU"},
-                {"DebugType", IsWin32() ? "None" : "pdbonly"},
+                {"DebugType", Environment.OSVersion.IsWin32() ? "None" : "pdbonly"},
                 {"DebugSymbols", false.ToString()},
                 {"OutputPath", binOutputDirectory.FullName},
                 {"AllowedReferenceRelatedFileExtensions", "\".mdb\"=\"\";\".pdb\"=\"\";\".xml\"=\"\""}
@@ -315,6 +321,62 @@ namespace CitizenMP.Server.Installer
             return 0;
         }
 
+        private static Tuple<bool, int> RunWithMonoConfiguration(string[] args)
+        {
+            if (Environment.OSVersion.IsWin32())
+            {
+                // .NET Framework does everything properly anyways
+                return new Tuple<bool, int>(false, 0);
+            }
+
+            var engineAssembly =
+                Assembly.Load(
+                    "Microsoft.Build.Engine, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a")
+                    .GetName();
+            if (engineAssembly.Version.Major < 12)
+            {
+                //var baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                var baseDir = Path.GetDirectoryName(Assembly.Load("CommandLine").Location);
+                if (baseDir == null)
+                    throw new DirectoryNotFoundException("Could not find base directory");
+
+                var tempExePath = Path.Combine(baseDir, new Random().Next(10000, 99999) + ".exe");
+                File.Copy(Assembly.GetExecutingAssembly().Location, tempExePath);
+
+                var tempConfigPath = tempExePath + ".config";
+                using (var tempConfig = File.OpenWrite(tempConfigPath))
+                {
+                    using (
+                        var srcConfig =
+                            Assembly.GetExecutingAssembly()
+                                .GetManifestResourceStream(
+                                    "CitizenMP.Server.Installer.AppDomainConfigurations.BuildNET45.xml"))
+                    {
+                        if (srcConfig == null)
+                            throw new FileNotFoundException("Could not find config resource");
+                        srcConfig.CopyTo(tempConfig);
+                        srcConfig.Flush();
+                    }
+                }
+
+                AppDomain.CurrentDomain.DomainUnload += (sender, e) =>
+                {
+                    File.Delete(tempConfigPath);
+                    File.Delete(tempExePath);
+                };
+
+                var arguments = string.Join(" ",
+                    new[] {tempExePath}.Concat(args)
+                        .Select(a => "\"" + a.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
+                var exitCode = RunProcess("mono", arguments, new Dictionary<string, string>
+                {
+                    {"MONO_IOMAP", "all"}
+                });
+                return new Tuple<bool, int>(true, exitCode);
+            }
+            return new Tuple<bool, int>(false, 0);
+        }
+
         private static bool Build(string projectFilePath, IDictionary<string, string> buildProperties,
             LoggerVerbosity verbosity, string logPath = null)
         {
@@ -349,7 +411,7 @@ namespace CitizenMP.Server.Installer
                 loggers.Add(new ConsoleLogger(verbosity) {ShowSummary = false});
 
                 // Import/Update Mozilla certs for NuGet to not fail out on non-Windows machines
-                if (!IsWin32())
+                if (!Environment.OSVersion.IsWin32())
                 {
                     try
                     {
@@ -357,15 +419,18 @@ namespace CitizenMP.Server.Installer
                         {
                             if (s == null || !s.Contains("X.509 Certificate"))
                                 return;
-                            writer.WriteLine("y");
+                            writer.WriteLine("yes");
                         });
 
                         // TODO: Make sure this does not fail out by checking if mozroots is installed
                         Console.WriteLine("Updating SSL certificates for NuGet...");
-                        Run("mozroots", "--import --sync --quiet");
-                        Run("certmgr", "-ssl https://go.microsoft.com", automaticYesResponder);
-                        Run("certmgr", "-ssl https://nugetgallery.blob.core.windows.net", automaticYesResponder);
-                        Run("certmgr", "-ssl https://nuget.org", automaticYesResponder);
+                        RunProcessThrowOnException("mozroots", "--import --sync --quiet");
+                        RunProcessThrowOnException("certmgr", "-ssl https://go.microsoft.com",
+                            lineProcessor: automaticYesResponder);
+                        RunProcessThrowOnException("certmgr", "-ssl https://nugetgallery.blob.core.windows.net",
+                            lineProcessor: automaticYesResponder);
+                        RunProcessThrowOnException("certmgr", "-ssl https://nuget.org",
+                            lineProcessor: automaticYesResponder);
                     }
                     catch (Exception error)
                     {
@@ -386,18 +451,27 @@ namespace CitizenMP.Server.Installer
                 }
 
                 // Use a different build route if running on the Mono interpreter
-                if (!IsWin32())
+                if (!Environment.OSVersion.IsWin32())
                 {
-                    // Build doesn't work with the new API on Mono, use the deprecated api
                     Console.WriteLine("Building server binaries...");
 #pragma warning disable 618
+                    // Build doesn't work with the new API on Mono, use the deprecated api
+                    var engine = Engine.GlobalEngine;
+
+                    // loggers
                     foreach (var logger in loggers)
-                        Engine.GlobalEngine.RegisterLogger(logger);
-                    var project = new Project(Engine.GlobalEngine) {BuildEnabled = true};
-                    project.Load(projectFilePath);
+                        engine.RegisterLogger(logger);
+
+                    // Apply build properties
+                    var buildPropertiesConverted = new BuildPropertyGroup();
+                    engine.GlobalProperties = buildPropertiesConverted;
                     foreach (var property in buildProperties)
-                        project.GlobalProperties.SetProperty(property.Key, property.Value);
-                    var result = project.Build();
+                        buildPropertiesConverted.SetProperty(property.Key, property.Value);
+
+                    // Load project
+                    var result = engine.BuildProjectFile(projectFilePath, new string[0], null, null,
+                        BuildSettings.None,
+                        null);
 #pragma warning restore 618
                     return result;
                 }
@@ -406,7 +480,8 @@ namespace CitizenMP.Server.Installer
                 {
                     Console.WriteLine("Building server binaries...");
 
-                    var buildReq = new BuildRequestData(projectFilePath, buildProperties, null, new[] {"Build"}, null);
+                    var buildReq = new BuildRequestData(projectFilePath, buildProperties, null, new[] {"Build"},
+                        null);
 
                     var result = BuildManager.DefaultBuildManager.Build(
                         new BuildParameters(pc)
@@ -424,18 +499,42 @@ namespace CitizenMP.Server.Installer
             }
         }
 
-        private static void Run(string name, string args, Action<string, StreamWriter> lineProcessor = null)
+        private static void RunProcessThrowOnException(string name, string args,
+            IDictionary<string, string> envVars = null,
+            Action<string, StreamWriter> lineProcessor = null)
         {
-            using (var p = Process.Start(new ProcessStartInfo
+            var exitCode = RunProcess(name, args, envVars, lineProcessor);
+
+            if (exitCode != 0)
             {
-                Arguments = args,
-                FileName = name,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardInput = lineProcessor != null,
-                RedirectStandardOutput = lineProcessor != null
-            }))
+                throw new Exception(string.Format("Process \"{0} {1}\" exited with error code {2}",
+                    name, args, exitCode));
+            }
+        }
+
+        private static int RunProcess(string name, string args, IDictionary<string, string> envVars = null,
+            Action<string, StreamWriter> lineProcessor = null)
+        {
+            using (var p = new Process
             {
+                StartInfo =
+                {
+                    Arguments = args,
+                    FileName = name,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    WorkingDirectory = Environment.CurrentDirectory,
+                    RedirectStandardInput = lineProcessor != null,
+                    RedirectStandardOutput = lineProcessor != null
+                }
+            })
+            {
+                if (envVars != null)
+                    foreach (KeyValuePair<string, string> i in envVars)
+                        p.StartInfo.EnvironmentVariables.Add(i.Key, i.Value);
+
+                p.Start();
+
                 if (lineProcessor == null)
                 {
                     p.WaitForExit();
@@ -449,19 +548,8 @@ namespace CitizenMP.Server.Installer
                     }
                 }
 
-                if (p.ExitCode != 0)
-                {
-                    throw new Exception(string.Format("Process \"{0} {1}\" exited with error code {2}",
-                        name, args, p.ExitCode));
-                }
+                return p.ExitCode;
             }
-        }
-
-        private static bool IsWin32()
-        {
-            return Environment.OSVersion.Platform == PlatformID.Win32NT ||
-                   Environment.OSVersion.Platform == PlatformID.Win32S ||
-                   Environment.OSVersion.Platform == PlatformID.Win32Windows;
         }
     }
 }
