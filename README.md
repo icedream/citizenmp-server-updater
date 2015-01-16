@@ -8,30 +8,27 @@ Updates, compiles and sets up your CitizenMP server automagically!
 Features
 --------
 
-- Compatible with both Microsoft .NET Framework and Mono (Mac OS X support planned)
+- Compatible with both Microsoft .NET Framework 4.5+ and Mono 3.0+ (Mac OS X support planned)
 - Creates ready-to-use start scripts for your platform
-- No extra setup besides usual requirements needed
+- No extra setup besides requirements listed below needed
 
 Requirements
 ------------
 
 First of all, you'll need Windows or Linux to run this tool. Currently, since no libgit2 binaries can be provided for Mac OS X, this tool won't work there. Here's the guaranteed compatible list of OS this tool can be run on:
 
-- Ubuntu 12.04 (old LTS) or higher, including 14.xx
+- Ubuntu 12.04 LTS or higher, including 14.xx
 - Debian 7.x (Wheezy) or higher, including testing and sid installations
-- Every other currently stable Linux distribution should work just fine as well
-- Any Windows operating system with .NET Framework 4 Full on it
+- Every other currently stable Linux distribution with up-to-date Mono
+- Any Windows operating system with .NET Framework 4.5 Full on it
 
 To run this program and the resulting server, you need the following components:
 
-- _On Windows:_ .NET Framework 4 or newer
-- _On Linux:_ Mono 2.10.x/3.x or newer
+- _On Windows:_ .NET Framework 4.5 or newer ([Download](http://microsoft.com/download/details.aspx?id=30653))
+- _On Linux:_ Mono 3.x or newer, runtime + xbuild files ([Installation instructions](http://www.mono-project.com/docs/getting-started/install/linux/))
 
-On Ubuntu and Debian you can just install all requirements with this command:
-
-```
-sudo apt-get install mono-runtime libmono-system-core4.0-cil
-```
+*Note that Mono 2.10.x/.NET 4 are not supported!*
+If you use a Debian-based distribution that still only offers Mono binaries older than 3.x, you must [switch to Xamarin's Debian repository](http://www.mono-project.com/docs/getting-started/install/linux/).
 
 Guides
 ------
@@ -45,7 +42,7 @@ Usage
 This tool ships with a usage screen that will be printed if this tool is run without arguments. It looks similar to the following:
 
 ```
-CitizenMP Server Updater 1.0.1+Branch.master.Sha.4475e9becd5fa22563a92fe202f8df21329969fc
+CitizenMP Server Updater 1.0.3
 © 2014-2015 Carl Kittelberger
 
 This is free software. You may redistribute copies of it under the terms of the MIT License <http://www.opensource.org/licenses/mit-license.php>.
