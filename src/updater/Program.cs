@@ -6,6 +6,8 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using System.Xml.XPath;
 using CommandLine;
 using LibGit2Sharp;
 using Microsoft.Build.BuildEngine;
@@ -149,7 +151,7 @@ namespace CitizenMP.Server.Installer
 
             // Check if we need to update by parsing AssemblyConfigurationAttribute in server assembly.
             // Should have a space-separated segment saying "CommitHash=<commit hash here>".
-            if (binOutputDirectory.Exists)
+            if (!options.ForceBuild && binOutputDirectory.Exists)
             {
                 var serverBins = binOutputDirectory
                     .EnumerateFiles("*Server.exe", SearchOption.TopDirectoryOnly)

@@ -19,6 +19,9 @@ namespace CitizenMP.Server.Installer
         [Option("log", DefaultValue = true, HelpText = "Write a log file \"build.log\" to the output folder.")]
         public bool WriteLogFile { get; set; }
 
+        [Option("force", DefaultValue = false, HelpText = "Enforce rebuilding the server even if the server's version is up-to-date.")]
+        public bool ForceBuild { get; set; }
+
         [ValueOption(0)]
         public string OutputPath { get; set; }
 
