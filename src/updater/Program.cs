@@ -6,8 +6,6 @@ using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Xml.Linq;
-using System.Xml.XPath;
 using CommandLine;
 using LibGit2Sharp;
 using Microsoft.Build.BuildEngine;

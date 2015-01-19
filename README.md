@@ -42,7 +42,7 @@ Usage
 This tool ships with a usage screen that will be printed if this tool is run without arguments. It looks similar to the following:
 
 ```
-CitizenMP Server Updater 1.0.3
+CitizenMP Server Updater 1.2.0-unstable.0+0.Branch.develop.Sha.d0d8779b88948107028717139b9542ef20d3f5ab
 © 2014-2015 Carl Kittelberger
 
 This is free software. You may redistribute copies of it under the terms of the MIT License <http://www.opensource.org/licenses/mit-license.php>.
@@ -55,9 +55,12 @@ citimp_upd [options...] "<targetpath>"
 
   --log              (Default: True) Write a log file "build.log" to the output folder.
 
+  --force            (Default: False) Enforce rebuilding the server even if the server's version is up-to-date.
+
   --version          (Default: False) Shows this tool's version.
 
   --help             Display this help screen.
+
 ```
 
 Examples:
